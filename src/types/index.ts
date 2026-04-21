@@ -58,3 +58,25 @@ export interface ActivityState {
   tabSwitchCount: number;
   focusStartTime: number | null;
 }
+
+export interface TabSwitchDetail {
+  id: string;
+  session_id: string;
+  user_id: string | null;
+  reason: string | null;
+  planned_duration_minutes: number | null;
+  actual_duration_seconds: number;
+  destination_url: string | null;
+  switched_at: string;
+  returned_at: string | null;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}

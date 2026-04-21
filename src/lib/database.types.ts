@@ -12,6 +12,7 @@ export interface Database {
       sessions: {
         Row: {
           id: string
+          user_id: string | null
           task_name: string
           planned_minutes: number
           started_at: string
@@ -29,6 +30,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          user_id?: string | null
           task_name: string
           planned_minutes: number
           started_at?: string
@@ -46,6 +48,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          user_id?: string | null
           task_name?: string
           planned_minutes?: number
           started_at?: string
@@ -66,6 +69,7 @@ export interface Database {
         Row: {
           id: string
           session_id: string
+          user_id: string | null
           event_type: string
           event_subtype: string | null
           timestamp: string
@@ -75,6 +79,7 @@ export interface Database {
         Insert: {
           id?: string
           session_id: string
+          user_id?: string | null
           event_type: string
           event_subtype?: string | null
           timestamp?: string
@@ -84,6 +89,7 @@ export interface Database {
         Update: {
           id?: string
           session_id?: string
+          user_id?: string | null
           event_type?: string
           event_subtype?: string | null
           timestamp?: string
@@ -144,6 +150,70 @@ export interface Database {
           theme?: string
           notifications_enabled?: boolean
           updated_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          email: string
+          full_name: string | null
+          avatar_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          full_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tab_switch_details: {
+        Row: {
+          id: string
+          session_id: string | null
+          user_id: string | null
+          reason: string | null
+          planned_duration_minutes: number | null
+          actual_duration_seconds: number
+          destination_url: string | null
+          switched_at: string
+          returned_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+          reason?: string | null
+          planned_duration_minutes?: number | null
+          actual_duration_seconds?: number
+          destination_url?: string | null
+          switched_at?: string
+          returned_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+          reason?: string | null
+          planned_duration_minutes?: number | null
+          actual_duration_seconds?: number
+          destination_url?: string | null
+          switched_at?: string
+          returned_at?: string | null
+          created_at?: string
         }
       }
     }

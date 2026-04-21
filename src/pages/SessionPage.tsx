@@ -3,13 +3,14 @@ import { Play, Pause, Square } from 'lucide-react';
 import { useSession } from '../hooks/useSession';
 import { useActivityMonitor } from '../hooks/useActivityMonitor';
 import { FocusIndicator } from '../components/FocusIndicator';
-import { InterruptionModal } from '../components/InterruptionModal';
+import { TabSwitchModal } from '../components/TabSwitchModal';
 import type { EventSubtype } from '../types';
 
 export function SessionPage() {
   const [taskName, setTaskName] = useState('');
   const [plannedMinutes, setPlannedMinutes] = useState(25);
-  const [showModal, setShowModal] = useState(false);
+  const [showTabSwitchModal, setShowTabSwitchModal] = useState(false);
+  const [showInterruptionModal, setShowInterruptionModal] = useState(false);
 
   const {
     currentSession,
@@ -21,6 +22,9 @@ export function SessionPage() {
     resumeSession,
     updateSessionState,
     logEvent,
+    logTabSwitch,
+    endTabSwitch,
+    currentTabSwitch,
   } = useSession();
 
   const { activityState, resetTabSwitchCount } = useActivityMonitor({
@@ -29,7 +33,7 @@ export function SessionPage() {
     },
     onTabSwitch: () => {
       if (currentSession && isRunning) {
-        logEvent('tab_switch');
+        setShowTabSwitchModal(true);
       }
     },
     idleThreshold: 60000,
@@ -37,10 +41,16 @@ export function SessionPage() {
 
   useEffect(() => {
     if (activityState.tabSwitchCount >= 4 && isRunning) {
-      setShowModal(true);
+      setShowInterruptionModal(true);
       pauseSession();
     }
   }, [activityState.tabSwitchCount, isRunning, pauseSession]);
+
+  useEffect(() => {
+    if (!activityState.isVisible && currentTabSwitch) {
+      endTabSwitch();
+    }
+  }, [activityState.isVisible, currentTabSwitch, endTabSwitch]);
 
   const handleStart = async () => {
     if (!taskName.trim()) return;
@@ -50,7 +60,7 @@ export function SessionPage() {
 
   const handlePause = async () => {
     await pauseSession();
-    setShowModal(true);
+    setShowInterruptionModal(true);
   };
 
   const handleResume = async () => {
@@ -68,6 +78,15 @@ export function SessionPage() {
     if (currentSession) {
       await logEvent('interruption', subtype);
     }
+  };
+
+  const handleTabSwitchSubmit = async (data: {
+    reason: string;
+    plannedDuration: number;
+    destinationUrl?: string;
+  }) => {
+    await logTabSwitch(data);
+    setShowTabSwitchModal(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -195,18 +214,18 @@ export function SessionPage() {
           <div className="bg-gradient-to-br from-blue-600/10 to-cyan-600/10 border border-blue-500/20 rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-white mb-2">Focus Detection Active</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              The system is monitoring tab visibility, keyboard activity, mouse movement, and idle time
-              to classify your focus patterns. Switching tabs more than 4 times in 3 minutes may trigger
-              an interruption classification.
+              The system monitors tab visibility, keyboard activity, mouse movement, and idle time
+              to classify your focus patterns. Every tab switch will be tracked with details about
+              why you switched and how long you planned to be away.
             </p>
           </div>
         </div>
       )}
 
-      <InterruptionModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onClassify={handleClassifyInterruption}
+      <TabSwitchModal
+        isOpen={showTabSwitchModal}
+        onClose={() => setShowTabSwitchModal(false)}
+        onSubmit={handleTabSwitchSubmit}
       />
     </div>
   );

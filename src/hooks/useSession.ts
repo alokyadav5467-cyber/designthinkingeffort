@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Session, EventType, EventSubtype, FocusState } from '../types';
+import type { Session, EventType, EventSubtype, FocusState, TabSwitchDetail } from '../types';
 
 interface UseSessionProps {
   onSessionEnd?: (session: Session) => void;
@@ -10,18 +10,23 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [currentTabSwitch, setCurrentTabSwitch] = useState<TabSwitchDetail | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentEventStartRef = useRef<number>(Date.now());
   const currentEventTypeRef = useRef<EventType>('focus');
 
-  const startSession = useCallback(async (taskName: string, plannedMinutes: number) => {
+  const startSession = useCallback(async (taskName: string, plannedMinutes: number, userId?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = userId || user?.id;
+
     const { data, error } = await supabase
       .from('sessions')
       .insert({
         task_name: taskName,
         planned_minutes: plannedMinutes,
         status: 'active',
+        user_id: currentUserId,
       })
       .select()
       .single();
@@ -41,6 +46,7 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
       session_id: data.id,
       event_type: 'focus',
       timestamp: new Date().toISOString(),
+      user_id: currentUserId,
     });
 
     return data;
@@ -53,6 +59,7 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
   ) => {
     if (!currentSession) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
     const now = Date.now();
     const duration = Math.floor((now - currentEventStartRef.current) / 1000);
 
@@ -62,11 +69,65 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
       event_subtype: eventSubtype,
       duration,
       metadata,
+      user_id: user?.id,
     });
 
     currentEventStartRef.current = now;
     currentEventTypeRef.current = eventType;
   }, [currentSession]);
+
+  const logTabSwitch = useCallback(async (data: {
+    reason: string;
+    plannedDuration: number;
+    destinationUrl?: string;
+  }) => {
+    if (!currentSession) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: tabSwitchDetail } = await supabase
+      .from('tab_switch_details')
+      .insert({
+        session_id: currentSession.id,
+        user_id: user?.id,
+        reason: data.reason,
+        planned_duration_minutes: data.plannedDuration,
+        destination_url: data.destinationUrl || null,
+        switched_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (tabSwitchDetail) {
+      setCurrentTabSwitch(tabSwitchDetail);
+    }
+
+    await logEvent('tab_switch', null, {
+      reason: data.reason,
+      planned_duration: data.plannedDuration,
+      destination_url: data.destinationUrl,
+    });
+
+    return tabSwitchDetail;
+  }, [currentSession, logEvent]);
+
+  const endTabSwitch = useCallback(async () => {
+    if (!currentTabSwitch) return;
+
+    const now = new Date().toISOString();
+    const switchedAt = new Date(currentTabSwitch.switched_at).getTime();
+    const actualDuration = Math.floor((new Date(now).getTime() - switchedAt) / 1000);
+
+    await supabase
+      .from('tab_switch_details')
+      .update({
+        returned_at: now,
+        actual_duration_seconds: actualDuration,
+      })
+      .eq('id', currentTabSwitch.id);
+
+    setCurrentTabSwitch(null);
+  }, [currentTabSwitch]);
 
   const updateSessionState = useCallback(async (focusState: FocusState) => {
     if (!currentSession || !isRunning) return;
@@ -195,11 +256,14 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
     currentSession,
     isRunning,
     elapsedTime,
+    currentTabSwitch,
     startSession,
     endSession,
     pauseSession,
     resumeSession,
     updateSessionState,
     logEvent,
+    logTabSwitch,
+    endTabSwitch,
   };
 }
