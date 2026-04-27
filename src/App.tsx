@@ -7,6 +7,9 @@ import { Analytics } from './pages/Analytics';
 import { Psychology } from './pages/Psychology';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
+import { TabSwitchAnalysis } from './pages/TabSwitchAnalysis';
+import { SmartInsights } from './pages/SmartInsights';
+import { SessionHistory } from './pages/SessionHistory';
 
 function App() {
   const { user, loading, signOut } = useAuth();
@@ -24,6 +27,12 @@ function App() {
         return <Psychology />;
       case 'settings':
         return <Settings />;
+      case 'tab-analysis':
+        return <TabSwitchAnalysis />;
+      case 'insights':
+        return <SmartInsights />;
+      case 'history':
+        return <SessionHistory />;
       default:
         return <Dashboard />;
     }

@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { MetricCard } from '../components/MetricCard';
+import { useStreak } from '../hooks/useStreak';
+import { Flame } from 'lucide-react';
 import type { Session } from '../types';
 
 export function Dashboard() {
+  const { streak } = useStreak();
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState({
     totalSessions: 0,
@@ -79,6 +82,16 @@ export function Dashboard() {
           color={stats.avgEffortAccuracy >= 80 ? 'green' : stats.avgEffortAccuracy >= 50 ? 'yellow' : 'red'}
         />
       </div>
+
+      {streak && streak.current_streak > 0 && (
+        <div className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-500/30 rounded-2xl p-6 flex items-center gap-4">
+          <Flame className="w-12 h-12 text-orange-400 flex-shrink-0" />
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-1">{streak.current_streak}-Day Streak</h2>
+            <p className="text-gray-300">Keep up the momentum! Longest streak: {streak.longest_streak} days</p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
         <h2 className="text-2xl font-bold text-white mb-6">Recent Sessions</h2>

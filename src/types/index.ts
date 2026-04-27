@@ -80,3 +80,13 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
+
+export interface UserStreak {
+  id: string;
+  user_id: string | null;
+  current_streak: number;
+  longest_streak: number;
+  last_session_date: string | null;
+  updated_at: string;
+  created_at: string;
+}

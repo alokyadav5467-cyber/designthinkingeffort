@@ -146,7 +146,7 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
   }, [currentSession, isRunning, logEvent]);
 
   const endSession = useCallback(async () => {
-    if (!currentSession) return;
+    if (!currentSession) return null;
 
     const now = new Date().toISOString();
     const totalSeconds = elapsedTime;
@@ -210,6 +210,7 @@ export function useSession({ onSessionEnd }: UseSessionProps = {}) {
 
     setCurrentSession(null);
     setElapsedTime(0);
+    return updatedSession;
   }, [currentSession, elapsedTime, onSessionEnd]);
 
   const pauseSession = useCallback(async () => {

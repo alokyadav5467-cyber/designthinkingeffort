@@ -4,13 +4,16 @@ import { useSession } from '../hooks/useSession';
 import { useActivityMonitor } from '../hooks/useActivityMonitor';
 import { FocusIndicator } from '../components/FocusIndicator';
 import { TabSwitchModal } from '../components/TabSwitchModal';
-import type { EventSubtype } from '../types';
+import { SessionSummaryModal } from '../components/SessionSummaryModal';
+import type { EventSubtype, Session } from '../types';
 
 export function SessionPage() {
   const [taskName, setTaskName] = useState('');
   const [plannedMinutes, setPlannedMinutes] = useState(25);
   const [showTabSwitchModal, setShowTabSwitchModal] = useState(false);
   const [showInterruptionModal, setShowInterruptionModal] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [completedSession, setCompletedSession] = useState<Session | null>(null);
 
   const {
     currentSession,
@@ -69,9 +72,18 @@ export function SessionPage() {
   };
 
   const handleStop = async () => {
-    await endSession();
+    const completed = await endSession();
+    if (completed) {
+      setCompletedSession(completed);
+      setShowSummary(true);
+    }
     setTaskName('');
     setPlannedMinutes(25);
+  };
+
+  const handleSummaryClose = () => {
+    setShowSummary(false);
+    setCompletedSession(null);
   };
 
   const handleClassifyInterruption = async (subtype: EventSubtype) => {
@@ -227,6 +239,14 @@ export function SessionPage() {
         onClose={() => setShowTabSwitchModal(false)}
         onSubmit={handleTabSwitchSubmit}
       />
+
+      {completedSession && (
+        <SessionSummaryModal
+          session={completedSession}
+          isOpen={showSummary}
+          onClose={handleSummaryClose}
+        />
+      )}
     </div>
   );
 }

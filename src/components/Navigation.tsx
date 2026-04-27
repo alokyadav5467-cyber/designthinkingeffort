@@ -1,4 +1,4 @@
-import { LayoutDashboard, Timer, BarChart3, Brain, Settings, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Timer, BarChart3, Brain, Settings, LogOut, User, Zap, Lightbulb, History } from 'lucide-react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface NavigationProps {
@@ -11,6 +11,9 @@ interface NavigationProps {
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'session', label: 'Session', icon: Timer },
+  { id: 'history', label: 'History', icon: History },
+  { id: 'tab-analysis', label: 'Tab Analysis', icon: Zap },
+  { id: 'insights', label: 'Insights', icon: Lightbulb },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'psychology', label: 'Psychology', icon: Brain },
   { id: 'settings', label: 'Settings', icon: Settings },
