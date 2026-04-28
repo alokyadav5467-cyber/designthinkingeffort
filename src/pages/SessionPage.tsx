@@ -57,10 +57,8 @@ export function SessionPage() {
 
   const handleStart = async () => {
     if (!taskName.trim()) return;
-    const session = await startSession(taskName, plannedMinutes);
-    if (session) {
-      resetTabSwitchCount();
-    }
+    await startSession(taskName, plannedMinutes);
+    resetTabSwitchCount();
   };
 
   const handlePause = async () => {
