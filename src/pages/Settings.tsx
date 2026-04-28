@@ -15,20 +15,42 @@ export function Settings() {
   }, []);
 
   const loadSettings = async () => {
-    const { data } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    let data = await supabase
       .from('user_settings')
       .select('*')
+      .eq('user_id', user.id)
       .maybeSingle();
 
-    if (data) {
-      setSettings(data);
+    // If no settings exist, create default ones
+    if (!data.data) {
+      const { data: newSettings } = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          idle_threshold_seconds: 60,
+          distraction_threshold: 4,
+          focus_block_minutes: 3,
+        })
+        .select()
+        .single();
+
+      setSettings(newSettings);
+    } else {
+      setSettings(data.data);
     }
   };
 
   const loadAllowedSites = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data } = await supabase
       .from('allowed_sites')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -54,9 +76,13 @@ export function Settings() {
   const addAllowedSite = async () => {
     if (!newDomain.trim()) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data } = await supabase
       .from('allowed_sites')
       .insert({
+        user_id: user.id,
         domain: newDomain.trim(),
         category: newCategory,
       })
